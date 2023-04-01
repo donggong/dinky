@@ -1,5 +1,6 @@
 # Dinky
 
+
 [![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
 [![Total Lines](https://tokei.rs/b1/github/DataLinkDC/dinky?category=lines)](https://github.com/DataLinkDC/dinky)
 [![CN doc](https://img.shields.io/badge/文档-中文版-blue.svg)](README_zh_CN.md)
