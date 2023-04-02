@@ -69,7 +69,7 @@ public class TaskController {
 
     private final TaskService taskService;
 
-    /** 新增或者更新 */
+    /** 新增或者更新 核心方法 */
     @PutMapping
     public Result<Void> saveOrUpdate(@RequestBody Task task) throws Exception {
         if (taskService.saveOrUpdateTask(task)) {
@@ -113,7 +113,7 @@ public class TaskController {
         }
     }
 
-    /** 批量执行 */
+    /** 批量执行，此处的权限可以考虑交由管理者 该功能是任务首次启动 不可行 */
     @PostMapping(value = "/submit")
     public Result<List<JobResult>> submit(@RequestBody JsonNode para) {
         if (para.size() > 0) {
@@ -121,6 +121,8 @@ public class TaskController {
             List<Integer> error = new ArrayList<>();
             for (final JsonNode item : para) {
                 Integer id = item.asInt();
+                // FlinkSql UDF FlinkENV
+                // FlinkJar
                 JobResult result = taskService.submitTask(id);
                 if (!result.isSuccess()) {
                     error.add(id);
@@ -145,7 +147,7 @@ public class TaskController {
         return Result.succeed(task, "获取成功");
     }
 
-    /** 获取所有可用的 FlinkSQLEnv */
+    /** 获取所有可用的 FlinkSQLEnv 该功能用于前端展示 不建议放此处 */
     @GetMapping(value = "/listFlinkSQLEnv")
     public Result<List<Task>> listFlinkSQLEnv() {
         return Result.succeed(taskService.listFlinkSQLEnv(), "获取成功");
@@ -163,6 +165,7 @@ public class TaskController {
         return taskService.releaseTask(id);
     }
 
+    /** 版本回退 */
     @PostMapping("/rollbackTask")
     public Result<Void> rollbackTask(@RequestBody TaskRollbackVersionDTO dto) {
         return taskService.rollbackTask(dto);
@@ -174,7 +177,7 @@ public class TaskController {
         return Result.succeed(taskService.developTask(id), "操作成功");
     }
 
-    /** 上线任务 */
+    /** 上线任务，jar任务如何管控权限 */
     @GetMapping(value = "/onLineTask")
     public Result<JobResult> onLineTask(@RequestParam Integer id) {
         return taskService.onLineTask(id);
@@ -192,13 +195,13 @@ public class TaskController {
         return taskService.cancelTask(id);
     }
 
-    /** 恢复任务 */
+    /** 恢复任务 任务进入开发状态 */
     @GetMapping(value = "/recoveryTask")
     public Result<Boolean> recoveryTask(@RequestParam Integer id) {
         return Result.succeed(taskService.recoveryTask(id), "操作成功");
     }
 
-    /** 重启任务 */
+    /** 重启任务 可以移除 */
     @GetMapping(value = "/restartTask")
     public Result<JobResult> restartTask(@RequestParam Integer id, @RequestParam Boolean isOnLine) {
         if (isOnLine) {
@@ -208,7 +211,7 @@ public class TaskController {
         }
     }
 
-    /** 选择保存点重启任务 */
+    /** 选择保存点重启任务 核心方法*/
     @GetMapping(value = "/selectSavePointRestartTask")
     public Result<JobResult> selectSavePointRestartTask(
             @RequestParam Integer id,

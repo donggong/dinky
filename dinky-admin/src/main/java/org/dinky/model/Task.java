@@ -154,6 +154,8 @@ public class Task extends SuperEntity<Task> {
         int jid = Asserts.isNull(jarId) ? 0 : jarId;
         boolean fg = Asserts.isNotNull(fragment) && fragment;
         boolean sts = Asserts.isNotNull(statementSet) && statementSet;
+        // savepoint path is close
+        // ???
         return new JobConfig(
                 type,
                 step,

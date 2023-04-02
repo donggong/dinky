@@ -413,6 +413,7 @@ public class JobManager {
                 Explainer.build(executor, useStatementSet, sqlSeparator)
                         .pretreatStatements(SqlUtil.getStatements(statement, sqlSeparator));
         try {
+            // UDF
             initUDF(jobParam.getUdfList(), runMode, config.getTaskId());
 
             for (StatementParam item : jobParam.getDdl()) {
@@ -764,6 +765,7 @@ public class JobManager {
         JobContextHolder.setJob(job);
         ready();
         try {
+            // submit jar
             GatewayResult gatewayResult = Gateway.build(config.getGatewayConfig()).submitJar();
             job.setResult(InsertResult.success(gatewayResult.getId()));
             job.setJobId(gatewayResult.getId());

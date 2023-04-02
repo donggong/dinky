@@ -215,10 +215,12 @@ public class TaskServiceImpl extends SuperServiceImpl<TaskMapper, Task> implemen
         Task task = this.getTaskInfoById(id);
         Asserts.checkNull(task, Tips.TASK_NOT_EXIST);
 
+        // remove
         if (Dialect.notFlinkSql(task.getDialect())) {
             return executeCommonSql(SqlDTO.build(task.getStatement(), task.getDatabaseId(), null));
         }
 
+        // remove isLogin
         ProcessEntity process =
                 StpUtil.isLogin()
                         ? ProcessContextHolder.registerProcess(
@@ -227,6 +229,7 @@ public class TaskServiceImpl extends SuperServiceImpl<TaskMapper, Task> implemen
                         : ProcessEntity.NULL_PROCESS;
 
         process.info("Initializing Flink job config...");
+        // importants
         JobConfig config = buildJobConfig(task);
 
         if (GatewayType.KUBERNETES_APPLICATION.equalsValue(config.getType())) {
@@ -236,6 +239,7 @@ public class TaskServiceImpl extends SuperServiceImpl<TaskMapper, Task> implemen
         JobManager jobManager = JobManager.build(config);
         process.start();
         JobResult jobResult;
+        // jar
         if (config.isJarTask()) {
             jobResult = jobManager.executeJar();
             process.finish("Submit Flink Jar finished.");
@@ -400,24 +404,29 @@ public class TaskServiceImpl extends SuperServiceImpl<TaskMapper, Task> implemen
 
     @Override
     public Task getTaskInfoById(Integer id) {
+        // dinky_task
         Task task = this.getById(id);
         if (task == null) {
             return null;
         }
 
+        // configJson
         task.parseConfig();
         if (task.getClusterId() != null) {
+            // dinky_cluster
             Cluster cluster = clusterService.getById(task.getClusterId());
             if (cluster != null) {
                 task.setClusterName(cluster.getAlias());
             }
         }
 
+        // dinky_task_statement
         Statement statement = statementService.getById(id);
         if (statement != null) {
             task.setStatement(statement.getStatement());
         }
 
+        // dinky_job_instance ???
         JobInstance jobInstance = jobInstanceService.getJobInstanceByTaskId(id);
         if (Asserts.isNotNull(jobInstance) && !JobStatus.isDone(jobInstance.getStatus())) {
             task.setJobInstanceId(jobInstance.getId());
@@ -436,6 +445,7 @@ public class TaskServiceImpl extends SuperServiceImpl<TaskMapper, Task> implemen
 
     @Override
     public boolean saveOrUpdateTask(Task task) {
+        // Flink UDF TASK
         if (Dialect.isUDF(task.getDialect())) {
             if (CollUtil.isNotEmpty(task.getConfig())
                     && Asserts.isNullString(task.getStatement())
@@ -938,10 +948,11 @@ public class TaskServiceImpl extends SuperServiceImpl<TaskMapper, Task> implemen
     }
 
     private JobConfig buildJobConfig(Task task) {
+        // FlinkJar || KubernetesApplication
         boolean isJarTask =
                 Dialect.FLINK_JAR.equalsVal(task.getDialect())
                         || Dialect.KUBERNETES_APPLICATION.equalsVal(task.getDialect());
-
+        // fragment sql???
         boolean fragment = Asserts.isNotNull(task.getFragment()) ? task.getFragment() : false;
         if (!isJarTask && fragment) {
             String flinkWithSql = dataBaseService.getEnabledFlinkWithSql();
@@ -950,16 +961,22 @@ public class TaskServiceImpl extends SuperServiceImpl<TaskMapper, Task> implemen
             }
         }
 
+        // envId maybe is flinkenv ???
+        // flink env task
         boolean isEnvIdValid = Asserts.isNotNull(task.getEnvId()) && task.getEnvId() != 0;
         if (!isJarTask && isEnvIdValid) {
             Task envTask = getTaskInfoById(task.getEnvId());
             if (Asserts.isNotNull(envTask) && Asserts.isNotNullString(envTask.getStatement())) {
+                // is set statement ???
                 task.setStatement(envTask.getStatement() + "\r\n" + task.getStatement());
             }
         }
 
+        // build submit config ???
+        // optimize
         JobConfig config = task.buildSubmitConfig();
         config.setJarTask(isJarTask);
+        // session standalone local???
         if (!JobManager.useGateway(config.getType())) {
             config.setAddress(
                     clusterService.buildEnvironmentAddress(
@@ -977,13 +994,16 @@ public class TaskServiceImpl extends SuperServiceImpl<TaskMapper, Task> implemen
             clusterConfiguration.put("taskCustomConfig", taskConfig);
             config.buildGatewayConfig(clusterConfiguration);
         } else {
+            // dinky_cluster_configuration
             Map<String, Object> gatewayConfig =
                     clusterConfigurationService.getGatewayConfig(task.getClusterConfigurationId());
             // submit application type with clusterConfiguration
             if (GatewayType.YARN_APPLICATION.equalsValue(config.getType())
                     || GatewayType.KUBERNETES_APPLICATION.equalsValue(config.getType())
                     || GatewayType.KUBERNETES_APPLICATION_OPERATOR.equalsValue(config.getType())) {
+                // flink jar
                 if (isJarTask) {
+                    // dinky_jar
                     Jar jar = jarService.getById(task.getJarId());
                     Assert.check(jar);
                     gatewayConfig.put("userJarPath", jar.getPath());
@@ -1003,6 +1023,7 @@ public class TaskServiceImpl extends SuperServiceImpl<TaskMapper, Task> implemen
             config.addGatewayConfig(task.parseConfig());
         }
 
+        // 此处考虑将checkpoint策略加进去
         switch (config.getSavePointStrategy()) {
             case LATEST:
                 Savepoints latestSavepoints =

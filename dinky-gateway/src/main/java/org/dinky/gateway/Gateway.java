@@ -43,6 +43,7 @@ public interface Gateway {
     static Optional<Gateway> get(GatewayConfig config) {
         Asserts.checkNotNull(config, "配置不能为空");
         Asserts.checkNotNull(config.getType(), "配置类型不能为空");
+        // 类加载
         ServiceLoader<Gateway> loader = ServiceLoader.load(Gateway.class);
         for (Gateway gateway : loader) {
             if (gateway.canHandle(config.getType())) {
