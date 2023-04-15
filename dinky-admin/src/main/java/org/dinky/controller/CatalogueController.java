@@ -217,7 +217,7 @@ public class CatalogueController {
         return Result.succeed(catalogues, "获取成功");
     }
 
-    /** 创建节点和作业 */
+    /** 创建节点和作业 核心 */
     @PutMapping("/createTask")
     public Result<Catalogue> createTask(@RequestBody CatalogueTaskDTO catalogueTaskDTO) {
         Catalogue catalogue = catalogueService.saveOrUpdateCatalogueAndTask(catalogueTaskDTO);
